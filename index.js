@@ -1,6 +1,11 @@
 const express = require("express");
-const app = express();
 const mongoose = require("mongoose");
+const bodyParser = require("body-parser");
+const cookieParser = require("cookie-parser");
+
+const { User } = require("./models/users");
+
+const app = express();
 const PORT = 5000;
 mongoose
   .connect(
@@ -9,6 +14,16 @@ mongoose
   )
   .then(() => console.log("DB Connected"))
   .catch((err) => console.error(err));
+
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.use(cookieParser());
+
+app.post("/api/users/register", (req, res) => {
+  const user = new User(req.body);
+  
+  return res.status(200);
+});
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
