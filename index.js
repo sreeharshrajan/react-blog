@@ -1,33 +1,48 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const bodyParser = require("body-parser");
-const cookieParser = require("cookie-parser");
-const config = require("./config/keys");
 
-const { User } = require("./model/user");
+const dbConfig = require("./config/db.config");
+
+const auth = require("./middlewares/auth");
+const errors = require("./middlewares/error");
+
+const unless = require("express-unless");
 
 const app = express();
-const PORT = 5000;
+
+mongoose.Promise = global.Promise; //for global sharing
 mongoose
-  .connect(config.mongoURI, { useNewUrlParser: true })
-  .then(() => console.log("DB Connected"))
-  .catch((err) => console.error(err));
+  .connect(dbConfig.db, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(
+    () => {
+      console.log("Database Connected");
+    },
+    (error) => {
+      console.log("Failed to Connect the Database" + error);
+    }
+  );
+auth.authenticateToken.unless = unless;
+app.use(
+  auth.authenticateToken.unless({
+    path: [
+      //Checks registered or not
+      { url: "/users/login", methods: ["POST"] },
+      { url: "/users/register", methods: ["POST"] },
+    ],
+  })
+);
 
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-app.use(cookieParser());
+app.use(express.json());
 
-app.post("/api/users/register", (req, res) => {
-  const user = new User(req.body);
-  user.save((err, userData) => {
-    if (err) return res.json({ success: false, err });
-    return res.status(200);
-  });
+app.use("/users", require("./routes/user.routes"));
+
+app.use(errors.errorHandler);
+
+const PORT = process.env.port || 4000;
+
+app.listen(PORT, function () {
+  console.log(`Server Running at ${PORT}`);
 });
-
-app.get("/", (req, res) => {
-  res.json({ "hollo~": "Hi~~Sree" });
-});
-
-app.listen(PORT);
-console.log(`This app is listening at ${PORT}`);
