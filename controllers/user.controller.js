@@ -1,37 +1,37 @@
-const bcryptjs = require("bcryptjs");
-const userService = require("../services/users.services");
+const bcrypt = require("bcryptjs");
+const userServices = require("../services/users.services");
 
 exports.register = (req, res, next) => {
   const { password } = req.body;
-  const salt = bcryptjs.genSaltSync(10);
-  req.body.password = bcryptjs.hashSync(password, salt);
+  const salt = bcrypt.genSaltSync(10);
+  req.body.password = bcrypt.hashSync(password, salt);
 
-  userService.register(req.body, (error, result) => {
+  userServices.register(req.body, (error, results) => {
     if (error) {
       return next(error);
     }
     return res.status(200).send({
       message: "Success",
-      data: "result",
+      data: results,
     });
   });
 };
 
 exports.login = (req, res, next) => {
   const { username, password } = req.body;
-  userService.login({ username, password }, (error, result) => {
+  userServices.login({ username, password }, (error, results) => {
     if (error) {
       return next(error);
     }
     return res.status(200).send({
       message: "Success",
-      data: "result",
+      data: results,
     });
   });
 };
 
 exports.userProfile = (req, res, next) => {
-  return res.status(200).json({
+  return res.status(401).json({
     message: "User Authorized!",
   });
 };
